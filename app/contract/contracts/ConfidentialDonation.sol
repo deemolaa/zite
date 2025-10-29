@@ -2,8 +2,8 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title AnonymousImpactPools
- * @notice Private donations with policy-gated public totals via Zama FHEVM.
+ * @title Zite - Confidential Donation Pool
+ * @notice Private donations with Zama FHEVM.
  *
  * Users donate ETH; per-user subtotals and round total are kept as encrypted euint64.
  * Totals can be made publicly decryptable only when the disclosure policy allows.
