@@ -2,10 +2,10 @@ import { execSync } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 
-const CONTRACTS_PACKAGE_DIR = "fhevm-hardhat-template";
+const CONTRACTS_PACKAGE_DIR = "contract";
 
 function getContractsPackageName() {
-  const pkgDir = path.resolve(`./packages/${CONTRACTS_PACKAGE_DIR}`);
+  const pkgDir = path.resolve(`./app/${CONTRACTS_PACKAGE_DIR}`);
   const jsonString = fs.readFileSync(
     path.join(pkgDir, "package.json"),
     "utf-8"

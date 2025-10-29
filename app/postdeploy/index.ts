@@ -6,12 +6,12 @@ import * as path from "path";
 The purpose of the functions below is:
 
 1. to parse:
-  - <root>/packages/<contracts dir>/deployments/localhost/FHECounter.json
-  - <root>/packages/<contracts dir>/deployments/sepolia/FHECounter.json
+  - <root>/app/<contracts dir>/deployments/localhost/FHECounter.json
+  - <root>/app/<contracts dir>/deployments/sepolia/FHECounter.json
 
 2. generate:
-  - <root>/packages/site/abi/FHECounterABI.ts
-  - <root>/packages/site/abi/FHECounterAddresses.ts
+  - <root>/app/frontend/abi/FHECounterABI.ts
+  - <root>/app/frontend/abi/FHECounterAddresses.ts
 
 * ************************************************************************** */
 
@@ -168,7 +168,7 @@ export function postDeploy(chainName: string, contractName: string) {
   saveDeployments(
     referenceABIJson,
     contractName,
-    path.resolve("../site/abi"),
+    path.resolve("../frontend/abi"),
     sepoliaDeployment,
     localhostDeployment
   );
