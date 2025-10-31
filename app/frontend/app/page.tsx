@@ -54,7 +54,7 @@ export default function Landing() {
         <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/zite"
-            className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-base font-semibold text-[#0B2B7D]"
+            className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-base font-semibold text-[#0B2B7D] hover:bg-white/15"
             style={{ background: "#FFD200" }}
           >
             Enter App

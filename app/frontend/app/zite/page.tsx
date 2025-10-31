@@ -23,20 +23,39 @@ export default function AppPage() {
     ethersReadonlyProvider,
   } = useMetaMaskEthersSigner();
 
-  const okChain = useMemo(() => (sameChain?.current ? sameChain.current(chainId) : true), [sameChain, chainId]);
-  const okSigner = useMemo(() => (sameSigner?.current ? sameSigner.current(ethersSigner) : true), [sameSigner, ethersSigner]);
+  const okChain = useMemo(
+    () => (sameChain?.current ? sameChain.current(chainId) : true),
+    [sameChain, chainId]
+  );
+  const okSigner = useMemo(
+    () => (sameSigner?.current ? sameSigner.current(ethersSigner) : true),
+    [sameSigner, ethersSigner]
+  );
 
   const enabled = useMemo(
-    () => Boolean(isConnected && !!provider && typeof chainId === "number" && okChain && okSigner),
+    () =>
+      Boolean(
+        isConnected &&
+          !!provider &&
+          typeof chainId === "number" &&
+          okChain &&
+          okSigner
+      ),
     [isConnected, provider, chainId, okChain, okSigner]
   );
 
   const { instance, refresh } = useFhevm({
     provider,
     chainId,
-    enabled,
+    enabled: true,
     initialMockChains,
   });
+
+  useEffect(() => {
+    if (provider && typeof chainId === "number" && !instance && refresh) {
+      refresh();
+    }
+  }, [provider, chainId, ethersSigner, instance, refresh]);
 
   const { storage } = useInMemoryStorage();
 
@@ -48,14 +67,20 @@ export default function AppPage() {
     ethersReadonlyProvider,
   });
 
-  useEffect(() => { if (!isConnected && connect) connect(); }, []); // eslint-disable-line
-  useEffect(() => { if (enabled && !instance && refresh) refresh(); }, [enabled, instance, refresh]);
-  useEffect(() => { if (cd.canRead) cd.listAll(); }, [cd.canRead, chainId]); // eslint-disable-line
+  useEffect(() => {
+    if (!isConnected && connect) connect();
+  }, []); // eslint-disable-line
+  useEffect(() => {
+    if (enabled && !instance && refresh) refresh();
+  }, [enabled, instance, refresh]);
+  useEffect(() => {
+    if (cd.canRead) cd.listAll();
+  }, [cd.canRead, chainId]); // eslint-disable-line
 
   const [showCreate, setShowCreate] = useState(false);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-[#F8FAFF] to-[#EFF6FF]">
+    <main className="min-h-screen">
       <header className="sticky top-0 z-10 backdrop-blur bg-white/60 border-b">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -71,7 +96,12 @@ export default function AppPage() {
               + Create Round
             </button>
             {!isConnected ? (
-              <button className="rounded-xl border px-3 py-2 text-sm" onClick={connect}>Connect</button>
+              <button
+                className="rounded-xl border px-3 py-2 text-sm"
+                onClick={connect}
+              >
+                Connect
+              </button>
             ) : (
               <span className="text-xs text-gray-600">Connected</span>
             )}
@@ -81,16 +111,19 @@ export default function AppPage() {
 
       <section className="max-w-6xl mx-auto px-6 py-6">
         <div className="rounded-2xl border bg-white/60 p-4">
-          <h1 className="text-xl font-semibold text-[#0B2B7D]">Confidential Donation Pools</h1>
+          <h1 className="text-xl font-semibold text-[#0B2B7D]">
+            Confidential Donation Pools
+          </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Create rounds with a reveal policy. Donors encrypt their amounts; totals unlock only when policy conditions are met.
+            Create rounds with a reveal policy. Donors encrypt their amounts;
+            totals unlock only when policy conditions are met.
           </p>
         </div>
       </section>
 
       {!!cd.message && (
-          <div className="px-6 mb-5 text-xs text-gray-600">{cd.message}</div>
-        )}
+        <div className="px-6 mb-5 text-xs text-gray-600">{cd.message}</div>
+      )}
 
       <section className="max-w-6xl mx-auto px-6 pb-16">
         <RoundList

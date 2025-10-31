@@ -297,6 +297,16 @@ export const ConfidentialDonationABI = {
           "type": "uint256"
         },
         {
+          "internalType": "uint256",
+          "name": "raised",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "paidOut",
+          "type": "bool"
+        },
+        {
           "internalType": "bool",
           "name": "totalPublicUnlocked",
           "type": "bool"

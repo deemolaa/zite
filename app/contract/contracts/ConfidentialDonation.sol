@@ -28,6 +28,8 @@ contract ConfidentialDonation is SepoliaConfig {
         string description;
         // public escrowed ETH (verifiable) for payout
         uint256 escrow;
+        uint256 raised;
+        bool paidOut;
         // encrypted totals
         euint64 encTotal;
         // once policy is met, we flip this and allow public decrypt for encTotal
@@ -84,6 +86,8 @@ contract ConfidentialDonation is SepoliaConfig {
             uint64 endAt,
             Disclosure policy,
             uint256 escrow,
+            uint256 raised,
+            bool paidOut,
             bool totalPublicUnlocked,
             string memory title,
             string memory description
@@ -98,6 +102,8 @@ contract ConfidentialDonation is SepoliaConfig {
             r.endAt,
             r.policy,
             r.escrow,
+            r.raised,
+            r.paidOut,
             r.totalPublicUnlocked,
             r.title,
             r.description
@@ -137,6 +143,8 @@ contract ConfidentialDonation is SepoliaConfig {
         r.title = title;
         r.description = description;
         r.escrow = 0;
+        r.raised = 0;
+        r.paidOut = false;
         r.encTotal = FHE.asEuint64(0);
         r.totalPublicUnlocked = false;
 
@@ -169,6 +177,7 @@ contract ConfidentialDonation is SepoliaConfig {
         FHE.allow(newUser, msg.sender);
 
         r.escrow += msg.value;
+        r.raised += msg.value;
 
         emit Donated(roundId, msg.sender, msg.value);
     }
@@ -201,6 +210,7 @@ contract ConfidentialDonation is SepoliaConfig {
         require(block.timestamp > r.endAt, "not ended");
         uint256 amount = r.escrow;
         r.escrow = 0;
+        r.paidOut = true;
         (bool ok, ) = r.beneficiary.call{value: amount}("");
         require(ok, "transfer failed");
         emit Payout(roundId, r.beneficiary, amount);

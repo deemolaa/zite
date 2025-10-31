@@ -77,6 +77,13 @@ export function RoundCard({
     [round?.endAt]
   );
 
+  const raisedEth = useMemo(
+    () => Number(round?.raised ?? 0n) / 1e18,
+    [round?.raised]
+  );
+  const paidOut = !!round?.paidOut;
+  
+
   const status = useMemo<"upcoming" | "live" | "ended">(() => {
     if (!startAt || !endAt) return "upcoming";
     if (nowSec < startAt) return "upcoming";
@@ -165,8 +172,13 @@ export function RoundCard({
               <div className="rounded-xl border bg-white/60 p-3">
                 <div className="text-[11px] text-gray-500">Raised so far</div>
                 <div className="text-lg font-semibold">
-                  {escrowEth.toFixed(4)} ETH
+                  {raisedEth.toFixed(4)} ETH
                 </div>
+                {paidOut && (
+      <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
+        ✓ Paid out
+      </div>
+    )}
               </div>
               <div className="rounded-xl border bg-white/60 p-3">
                 <div className="text-[11px] text-gray-500">Reveal policy</div>

@@ -33,6 +33,8 @@ export type RoundView = {
   endAt: bigint;
   policy: number;
   escrow: bigint;
+  raised: bigint;
+  paidOut: boolean;
   totalPublicUnlocked: boolean;
   title: string;
   description: string;
@@ -210,9 +212,11 @@ export function useConfidentialDonation({
           endAt: BigInt(r[4]),
           policy: Number(r[5]),
           escrow: BigInt(r[6]),
-          totalPublicUnlocked: Boolean(r[7]),
-          title: r[8],
-          description: r[9],
+          raised: BigInt(r[7]),
+          paidOut: Boolean(r[8]),
+          totalPublicUnlocked: Boolean(r[9]),
+          title: r[10],
+          description: r[11],
         };
         setRoundsMap((m) =>
           eqRound(m[roundId], view) ? m : { ...m, [roundId]: view }
