@@ -99,6 +99,18 @@ export const ConfidentialDonationABI = {
           "internalType": "uint64",
           "name": "goalWei",
           "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "description",
+          "type": "string"
         }
       ],
       "name": "RoundCreated",
@@ -148,6 +160,16 @@ export const ConfidentialDonationABI = {
           "internalType": "enum ConfidentialDonation.Disclosure",
           "name": "policy",
           "type": "uint8"
+        },
+        {
+          "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "description",
+          "type": "string"
         }
       ],
       "name": "createRound",
@@ -176,6 +198,38 @@ export const ConfidentialDonationABI = {
       "name": "donate",
       "outputs": [],
       "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "roundId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "exists",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllRoundIds",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -246,6 +300,16 @@ export const ConfidentialDonationABI = {
           "internalType": "bool",
           "name": "totalPublicUnlocked",
           "type": "bool"
+        },
+        {
+          "internalType": "string",
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "description",
+          "type": "string"
         }
       ],
       "stateMutability": "view",
