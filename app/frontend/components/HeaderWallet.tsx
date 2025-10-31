@@ -70,7 +70,7 @@ export function HeaderWallet({ rightIcon }: Props) {
           <button
             onClick={onConnect}
             disabled={busy}
-            className="px-3 py-1 rounded-md border bg-white/80 backdrop-blur hover:bg-white disabled:opacity-50"
+            className="px-3 py-1 rounded-xl border bg-white/80 backdrop-blur hover:bg-white disabled:opacity-50"
             title="Connect wallet"
           >
             {busy ? "…" : "Connect"}
@@ -81,7 +81,7 @@ export function HeaderWallet({ rightIcon }: Props) {
               <button
                 onClick={onSwitchToSepolia}
                 disabled={busy}
-                className="px-3 py-1 rounded-md border bg-white/80 backdrop-blur hover:bg-white disabled:opacity-50"
+                className="px-3 py-1 rounded-xl border bg-white/80 backdrop-blur hover:bg-white disabled:opacity-50"
                 title="Switch to Sepolia"
               >
                 {busy ? "…" : "Switch"}
@@ -90,7 +90,7 @@ export function HeaderWallet({ rightIcon }: Props) {
 
             <button
               onClick={onCopy}
-              className="px-3 py-1 rounded-md border bg-white/80 backdrop-blur hover:bg-white font-mono text-sm"
+              className="px-3 py-1 rounded-xl border bg-white/80 backdrop-blur hover:bg-white font-mono text-sm"
               title={addr ?? "Address"}
             >
               {short(addr)}
@@ -99,7 +99,7 @@ export function HeaderWallet({ rightIcon }: Props) {
             <button
               onClick={onDisconnect}
               disabled={busy}
-              className="px-3 py-1 rounded-md border bg-white/80 backdrop-blur hover:bg-white disabled:opacity-50"
+              className="px-3 py-1 rounded-xl border bg-white/80 backdrop-blur hover:bg-white disabled:opacity-50"
               title="Disconnect wallet"
             >
               {busy ? "…" : "Disconnect"}
