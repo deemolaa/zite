@@ -6,7 +6,7 @@ import {
   FhevmDecryptionSignature,
   type FhevmInstance,
   type GenericStringStorage,
-} from "../hooks/fhevm-react";
+} from "../../fhevm-sdk";
 import { ConfidentialDonationABI } from "@/abi/ConfidentialDonationABI";
 import { ConfidentialDonationAddresses } from "@/abi/ConfidentialDonationAddresses";
 

@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useState } from "react";
 import {
   GenericStringInMemoryStorage,
   type GenericStringStorage,
-} from "../hooks/fhevm-react";
+} from "../../fhevm-sdk";
 
 interface UseInMemoryStorageState {
   storage: GenericStringStorage;
