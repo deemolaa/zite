@@ -1,4 +1,4 @@
-# ZITE - CONFIDENTIAL DONATION
+# ZITE - CONFIDENTIAL DONATION PLATFORM.
 
 Zite is a confidential donation platform that lets anyone contribute to meaningful causes privately, without exposing how much they gave.
 
