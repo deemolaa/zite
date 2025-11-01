@@ -52,13 +52,38 @@ export default function AppPage() {
     initialMockChains,
   });
 
-  useEffect(() => {
+// ---- CLIENT-ONLY FHE INIT with CDN -> local fallback
+useEffect(() => {
+  let alive = true;
   (async () => {
-    await initFheWithFallback();
-    refresh?.();
+    if (typeof window === "undefined") return;
+
+    try {
+      // dynamic import prevents SSR from bundling web SDK
+      const { initSDK } = await import("@zama-fhe/relayer-sdk/web");
+
+      // Try CDN (zama.org), then fallback to local /public files
+      try {
+        await initSDK(); // defaults to CDN
+        console.log("✅ FHEVM SDK initialized via CDN");
+      } catch (cdnErr) {
+        console.warn("⚠️ CDN init failed, falling back to local WASM", cdnErr);
+        await initSDK({
+          tfheParams: "/tfhe_bg.wasm",
+          kmsParams: "/kms_lib_bg.wasm",
+        });
+        console.log("✅ FHEVM SDK initialized via local WASM");
+      }
+      if (alive) refresh?.();
+    } catch (e) {
+      console.error("FHEVM init load error:", e);
+    }
   })();
+  return () => { alive = false; };
+  // refresh is stable from the hook; no deps on provider/chainId to avoid reinit storms
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
+
 
   useEffect(() => {
     if (provider && typeof chainId === "number" && !instance && refresh) {
@@ -161,17 +186,3 @@ export default function AppPage() {
     </main>
   );
 }
- async function initFheWithFallback() {
-  try {
-    await initSDK(); // default URLs -> CDN
-    console.log("✅ FHEVM SDK initialized via cdn.zama.org");
-  } catch (err) {
-    console.warn("⚠️ CDN init failed, using local WASM", err);
-    await initSDK({
-      tfheParams: "/tfhe_bg.wasm",   // served from /public
-      kmsParams: "/kms_lib_bg.wasm", // served from /public
-    });
-    console.log("✅ FHEVM SDK initialized via local WASM");
-  }
-}
-

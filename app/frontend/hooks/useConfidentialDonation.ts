@@ -176,12 +176,16 @@ export function useConfidentialDonation({
         setMessage("Contract not deployed on this chain.");
         return;
       }
-      const ids = (await ro.getAllRoundIds()) as `0x${string}`[];
-      setRoundIds((prev) =>
-        ids.length === prev.length && ids.every((id, i) => id === prev[i])
-          ? prev
-          : ids
-      );
+      const ids = (await ro.getAllRoundIds()) as readonly `0x${string}`[];
+      const ordered = [...ids].reverse();
+
+      setRoundIds(prev => {
+        // shallow equality check
+        const same =
+          prev.length === ordered.length &&
+          prev.every((v, i) => v === ordered[i]);
+        return same ? prev : ordered;
+      });
     } catch (e: any) {
       setMessage(`List failed: ${friendly(e)}`);
     }
