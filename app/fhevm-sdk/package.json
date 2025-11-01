@@ -28,6 +28,8 @@
       "default": "./dist/react/index.js"
     }
   },
+  "files": ["dist"],
+  "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -p tsconfig.json --watch",

@@ -6,7 +6,7 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "workspaces": ["app/*"],
+  "workspaces": ["packages/*", "app/*"],
 
   "scripts": {
     "postinstall": "npm -w @fhevm/sdk run build",
