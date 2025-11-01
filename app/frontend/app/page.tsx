@@ -18,16 +18,6 @@ export default function Landing() {
         }}
       />
 
-      <header className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2"></div>
-
-        <Link
-          href="/zite"
-          className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-white hover:bg-white/15"
-        >
-          →
-        </Link>
-      </header>
 
       <section className="max-w-6xl mx-auto px-6 py-20 md:py-28 text-center">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
