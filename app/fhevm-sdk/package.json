@@ -5,26 +5,26 @@
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
     "./core": {
-      "types": "./src/core/index.ts",
+      "types": "./dist/core/index.d.ts",
       "default": "./dist/core/index.js"
     },
     "./storage": {
-      "types": "./src/storage/index.ts",
+      "types": "./dist/storage/index.d.ts",
       "default": "./dist/storage/index.js"
     },
     "./types": {
-      "types": "./src/fhevmTypes.ts",
+      "types": "./dist/fhevmTypes.ts",
       "default": "./dist/fhevmTypes.js"
     },
     "./react": {
-      "types": "./src/react/index.ts",
+      "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     }
   },
