@@ -1,7 +1,10 @@
+"use client"
+
 import { ethers } from "ethers";
 import { useMetaMask } from "./useMetaMaskProvider";
 import {
   createContext,
+  PropsWithChildren,
   ReactNode,
   RefObject,
   useContext,
@@ -158,16 +161,16 @@ interface MetaMaskEthersSignerProviderProps {
   initialMockChains: Readonly<Record<number, string>>;
 }
 
-export const MetaMaskEthersSignerProvider: React.FC<MetaMaskEthersSignerProviderProps> = ({
-  children, initialMockChains
-}) => {
+export function MetaMaskEthersSignerProvider(
+  { children, initialMockChains }: PropsWithChildren<{ initialMockChains: Readonly<Record<number, string>> }>
+) {
   const props = useMetaMaskEthersSignerInternal({ initialMockChains });
   return (
     <MetaMaskEthersSignerContext.Provider value={props}>
       {children}
     </MetaMaskEthersSignerContext.Provider>
   );
-};
+}
 
 export function useMetaMaskEthersSigner() {
   const context = useContext(MetaMaskEthersSignerContext);
