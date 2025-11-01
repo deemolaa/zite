@@ -9,6 +9,7 @@
   "workspaces": ["app/*"],
 
   "scripts": {
+    "postinstall": "npm -w @fhevm/sdk run build",
     "chain": "pnpm hardhat:chain",
     "compile": "pnpm hardhat:compile",
     "deploy:localhost": "pnpm hardhat:deploy && pnpm generate",
