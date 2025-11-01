@@ -1,5 +1,45 @@
 # ZITE - CONFIDENTIAL DONATION
 
+Zite is a confidential donation platform that lets anyone contribute to meaningful causes privately, without exposing how much they gave.
+
+<img width="1440" height="715" alt="Screenshot 2025-11-01 at 15 02 33" src="https://github.com/user-attachments/assets/00bcec7c-3f68-4611-82ab-f8724054829c" />
+
+## ✨ Key Features
+
+🔒 Fully Private Donations: Amounts are encrypted client-side and stored encrypted on-chain. No one sees them unless allowed.
+🧠 Homomorphic Aggregation: Totals are calculated using Fully Homomorphic Encryption — without decrypting on-chain.
+🎛 Reveal Policy Control: The round creator chooses when totals become visible: • After the round ends • After the round ends and goal is met • Never reveal
+🙋 Donor Self-Decryption: Each donor can decrypt only their own contributions at any time.
+📊 Conditional Total Reveal: If the reveal conditions are met, the owner can unlock the total for public visibility.
+💸 Secure Payout Flow: Funds can be released to the beneficiary only after the round ends. No forced trust needed.
+⏱ Live Status + Countdown: Displays real-time round phase: Upcoming, Live, or Ended, with timer.
+🧱 Clean Web3 UX:	Native MetaMask support, no extra extensions or setup required.
+🎨 Modern Responsive UI: A smooth, minimal interface designed to make privacy feel natural and intuitive.
+
+## 🧭 How It Works (Simplified)
+
+1. User enters donation amount
+2. Amount is encrypted locally in browser
+3. Encrypted value is sent to the smart contract
+4. Contract adds encrypted values together using Zama FHEVM
+5. Donors can decrypt only their own donation
+6. Round totals unlock only when the policy conditions are satisfied
+100% on-chain confidentiality.
+
+## 🎯 Example Use Cases
+
+* Crowdfunding sensitive causes
+* Charity funding without public donor pressure
+* DAO-based payroll / grants where privacy matters
+* Community support projects
+
+🛠 Built With
+
+* Zama FHEVM (Fully Homomorphic Encryption Virtual Machine)
+* Solidity + Hardhat
+* Next.js (App Router) UI
+* MetaMask / EIP-1193 Wallets
+
 ## Project Structure
 
 This repository has a monorepo structure with the following components:
