@@ -148,6 +148,9 @@ importers:
       idb:
         specifier: ^8.0.3
         version: 8.0.3
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
     devDependencies:
       '@types/node':
         specifier: ~18.19.50
@@ -170,9 +173,6 @@ importers:
       jsdom:
         specifier: ^27.0.0
         version: 27.1.0
-      react:
-        specifier: 19.0.0
-        version: 19.0.0
       typescript:
         specifier: ~5.8.2
         version: 5.8.3
