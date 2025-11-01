@@ -18,16 +18,12 @@ const nextConfig: NextConfig = {
         ],
 
       },
-
       {
-        // our self-hosted SDK can be embedded cross-origin if needed
         source: "/relayer-sdk-js/:path*",
         headers: [
           { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
         ],
       },
-
-      
     ];
   }
 };
