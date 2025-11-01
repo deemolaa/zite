@@ -161,8 +161,7 @@ export default function AppPage() {
     </main>
   );
 }
-
-export async function initFheWithFallback() {
+ async function initFheWithFallback() {
   try {
     await initSDK(); // default URLs -> CDN
     console.log("✅ FHEVM SDK initialized via cdn.zama.org");
