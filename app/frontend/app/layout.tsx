@@ -3,11 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import Image from "next/image";
 import { HeaderWallet } from "@/components/HeaderWallet";
-
-export const metadata: Metadata = {
-  title: "Zite - Confidential Donation",
-  description: "Private donations with policy-gated option using Zama FHEVM.",
-};
+import Script from "next/script";
 
 export default async function RootLayout({
   children,
@@ -16,6 +12,18 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
+
+<head>
+        <title>Zite - Confidential Donation</title>
+        <meta name='description' content='Private donations with policy-gated option using Zama FHEVM.' />
+
+        {/* Make the SDK available on window.relayerSDK before the app executes */}
+        <Script
+          src="/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      
       <body className={`zama-bg text-foreground antialiased`}>
         <Providers>
           <div className="fixed inset-0 w-full h-full zama-bg z-[-20] min-w-[850px]"></div>
