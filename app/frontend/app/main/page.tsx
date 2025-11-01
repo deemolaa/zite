@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMetaMaskEthersSigner } from "@/hooks/metamask/useMetaMaskEthersSigner";
-import { useFhevm } from "@fhevm/sdk";
+import { useFhevm } from "../../../fhevm-sdk";
 import { useInMemoryStorage } from "@/hooks/useInMemoryStorage";
 import { useConfidentialDonation } from "@/hooks/useConfidentialDonation";
 import { CreateRoundModal } from "@/components/CreateRoundModal";
