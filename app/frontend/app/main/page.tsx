@@ -9,6 +9,7 @@ import { useInMemoryStorage } from "@/hooks/useInMemoryStorage";
 import { useConfidentialDonation } from "@/hooks/useConfidentialDonation";
 import { CreateRoundModal } from "@/components/CreateRoundModal";
 import { RoundList } from "@/components/RoundList";
+import { initSDK } from "@zama-fhe/relayer-sdk/web";
 
 export default function AppPage() {
   const {
@@ -50,6 +51,14 @@ export default function AppPage() {
     enabled: true,
     initialMockChains,
   });
+
+  useEffect(() => {
+  (async () => {
+    await initFheWithFallback();
+    refresh?.();
+  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   useEffect(() => {
     if (provider && typeof chainId === "number" && !instance && refresh) {
@@ -152,3 +161,18 @@ export default function AppPage() {
     </main>
   );
 }
+
+export async function initFheWithFallback() {
+  try {
+    await initSDK(); // default URLs -> CDN
+    console.log("✅ FHEVM SDK initialized via cdn.zama.org");
+  } catch (err) {
+    console.warn("⚠️ CDN init failed, using local WASM", err);
+    await initSDK({
+      tfheParams: "/tfhe_bg.wasm",   // served from /public
+      kmsParams: "/kms_lib_bg.wasm", // served from /public
+    });
+    console.log("✅ FHEVM SDK initialized via local WASM");
+  }
+}
+
