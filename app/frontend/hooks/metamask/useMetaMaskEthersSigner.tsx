@@ -99,34 +99,6 @@ function useMetaMaskEthersSignerInternal(parameters: { initialMockChains?: Reado
     setEthersReadonlyProvider(rop);
   }, [provider, chainId, isConnected, accounts, initialMockChains]);
 
-  useEffect(() => {
-    if (!provider || !chainId || !isConnected || !accounts || accounts.length === 0) {
-      ethersSignerRef.current = undefined;
-      setEthersSigner(undefined);
-      setEthersBrowserProvider(undefined);
-      setEthersReadonlyProvider(undefined);
-      return;
-    }
-
-    console.warn(`[useMetaMaskEthersSignerInternal] create new ethers.BrowserProvider(), chainId=${chainId}`);
-
-    const bp: ethers.BrowserProvider = new ethers.BrowserProvider(provider);
-    let rop: ethers.ContractRunner = bp;
-    const rpcUrl: string | undefined = initialMockChains?.[chainId];
-    if (rpcUrl) {
-      rop = new ethers.JsonRpcProvider(rpcUrl);
-      console.warn(`[useMetaMaskEthersSignerInternal] create new readonly provider ethers.JsonRpcProvider(${rpcUrl}), chainId=${chainId}`);
-    } else {
-      console.warn(`[useMetaMaskEthersSignerInternal] use ethers.BrowserProvider() as readonly provider, chainId=${chainId}`);
-    }
-
-    const s = new ethers.JsonRpcSigner(bp, accounts[0]);
-    ethersSignerRef.current = s;
-    setEthersSigner(s);
-    setEthersBrowserProvider(bp);
-    setEthersReadonlyProvider(rop);
-  }, [provider, chainId, isConnected, accounts, initialMockChains]);
-
   // 👇 derive EIP-1193 request-capable object from either provider or bp.provider
   const eip1193 =
     (provider as any)?.request
