@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMetaMaskEthersSigner } from "@/hooks/metamask/useMetaMaskEthersSigner";
-import { useFhevm } from "@fhevm/sdk";
+import { useRelayerInstance } from "@/hooks/useRelayerInstance";
 import { useInMemoryStorage } from "@/hooks/useInMemoryStorage";
 import { useConfidentialDonation } from "@/hooks/useConfidentialDonation";
 import { CreateRoundModal } from "@/components/CreateRoundModal";
@@ -44,12 +44,20 @@ export default function AppPage() {
     [isConnected, provider, chainId, okChain, okSigner]
   );
 
-  const { instance, refresh } = useFhevm({
-    provider,
-    chainId,
-    enabled: true,
-    initialMockChains,
-  });
+  const { instance, refresh, error } = useRelayerInstance({
+  provider,      // IMPORTANT: should be window.ethereum or normalized by hook
+  chainId,
+  enabled,
+});
+
+{!!error && (
+  <div className="px-6 mb-2 text-xs text-red-600">
+    Relayer init error: {error}
+  </div>
+)}
+
+
+
 
   useEffect(() => {
     if (provider && typeof chainId === "number" && !instance && refresh) {
@@ -61,7 +69,6 @@ export default function AppPage() {
 
   const cd = useConfidentialDonation({
     instance,
-    storage,
     chainId,
     ethersSigner,
     ethersReadonlyProvider,
@@ -76,6 +83,10 @@ export default function AppPage() {
   useEffect(() => {
     if (cd.canRead) cd.listAll();
   }, [cd.canRead, chainId]); // eslint-disable-line
+
+  <div className="px-6 text-xs">
+  canWrite={String(cd.canWrite)} canEncrypt={String(cd.canEncrypt)} hasInstance={String(!!instance)}
+</div>
 
   const [showCreate, setShowCreate] = useState(false);
 

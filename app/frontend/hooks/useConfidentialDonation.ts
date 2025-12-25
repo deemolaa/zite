@@ -2,18 +2,24 @@
 
 import { ethers } from "ethers";
 import { useCallback, useMemo, useRef, useState, useEffect } from "react";
-import {
-  FhevmDecryptionSignature,
-  type FhevmInstance,
-  type GenericStringStorage,
-} from "@fhevm/sdk";
 import { ConfidentialDonationABI } from "@/abi/ConfidentialDonationABI";
 import { ConfidentialDonationAddresses } from "@/abi/ConfidentialDonationAddresses";
+
+/**
+ * v0.9+ / Relayer SDK:
+ * - No FhevmDecryptionSignature / GenericStringStorage
+ * - You sign EIP-712 directly with ethers v6
+ * - You call instance.userDecrypt(...) or instance.publicDecrypt(...)
+ *
+ * NOTE: We keep the instance type as `any` to avoid fighting SDK export/type changes
+ * between @zama-fhe/relayer-sdk releases.
+ */
 
 type ContractInfo = {
   abi: typeof ConfidentialDonationABI.abi;
   address?: `0x${string}`;
 };
+
 function byChain(chainId?: number): ContractInfo {
   if (!chainId) return { abi: ConfidentialDonationABI.abi };
   const e = (ConfidentialDonationAddresses as any)[String(chainId)];
@@ -62,25 +68,32 @@ function friendly(e: any): string {
     e?.error?.message ||
     e?.message ||
     "") as string;
-  if (/missing revert data/i.test(raw))
-    return "Unable to read from contract. Check network and address.";
-  if (/execution reverted/i.test(raw) && !/reason/i.test(raw))
-    return "Transaction reverted.";
-  if (/not started/i.test(raw)) return "Donation not started yet.";
-  if (/not ended/i.test(raw)) return "Round has not ended yet.";
-  if (/ended/i.test(raw)) return "This round has ended.";
-  if (/round not found/i.test(raw)) return "Round not found.";
-  if (/not round owner/i.test(raw))
-    return "Only the round owner can perform this action.";
+
+      // policy messages (your contract reverts with these)
+  if (/policy:\s*after end & goal/i.test(raw))
+    return "Donation still ongoing: total reveals only after end time AND meeting the goal.";
+  if (/policy:\s*after end/i.test(raw))
+    return "Donation still ongoing: total reveals only after end time.";
   if (/policy:\s*never/i.test(raw))
     return "Totals are never revealed for this round.";
-  if (/after end & goal/i.test(raw))
-    return "Totals reveal after end time AND meeting the goal.";
-  if (/after end/i.test(raw)) return "Totals reveal after end time.";
+
+  if (/not started/i.test(raw)) return "Donation not started yet.";
+  if (/not ended/i.test(raw)) return "Donation still ongoing.";
+  if (/ended/i.test(raw)) return "This round has ended.";
+  if (/round not found/i.test(raw)) return "Round not found.";
+  if (/not round owner/i.test(raw)) return "Only the round owner can do this.";
+
+  // keep this generic—don’t map it to “ongoing”
+  if (/missing revert data/i.test(raw))
+    return "Transaction reverted (no reason returned by RPC). Check network and contract address.";
+
+  if (/execution reverted/i.test(raw) && !/reason/i.test(raw))
+    return "Transaction reverted.";
+
   return raw.replace(/^execution reverted:\s*/i, "") || "Transaction error.";
 }
 
-// --- NEW: util to ensure contract code exists ---
+// util: ensure contract code exists
 async function hasCode(provider: any, address?: string) {
   if (!provider || !address) return false;
   try {
@@ -91,15 +104,95 @@ async function hasCode(provider: any, address?: string) {
   }
 }
 
+/**
+ * userDecrypt helper (v0.9 self-relaying)
+ * - generateKeypair()
+ * - createEIP712(...)
+ * - signer.signTypedData(domain, types, message)
+ * - userDecrypt(...)
+ */
+async function userDecryptOne(params: {
+  instance: any;
+  signer: ethers.JsonRpcSigner;
+  handle: string;
+  contractAddress: string;
+}) {
+  const { instance, signer, handle, contractAddress } = params;
+
+  const keypair = instance.generateKeypair();
+  const userAddress = await signer.getAddress();
+
+  const startTimestamp = Math.floor(Date.now() / 1000).toString();
+  const durationDays = "10";
+  const contractAddresses = [contractAddress];
+
+  const eip712 = instance.createEIP712(
+    keypair.publicKey,
+    contractAddresses,
+    startTimestamp,
+    durationDays
+  );
+
+  // ethers v6: signTypedData(domain, types, value)
+const { EIP712Domain, ...typesNoDomain } = eip712.types ?? {};
+const signature = await signer.signTypedData(
+  eip712.domain,
+  typesNoDomain,
+  eip712.message
+);
+
+
+  const res = await instance.userDecrypt(
+    [{ handle, contractAddress }],
+    keypair.privateKey,
+    keypair.publicKey,
+    signature,
+    contractAddresses,
+    userAddress,
+    startTimestamp,
+    durationDays
+  );
+
+  return res[handle] as bigint;
+}
+
+/**
+ * publicDecrypt helper (for handles made publicly decryptable on-chain)
+ * Note: this requires your contract to call FHE.makePubliclyDecryptable(handle)
+ */
+
+async function publicDecryptOne(params: {
+  instance: any;
+  handle: any;
+}) {
+  const { instance, handle } = params;
+
+  const h =
+    typeof handle === "string"
+      ? (handle.startsWith("0x") ? handle : `0x${handle}`)
+      : ethers.hexlify(handle);
+
+  const results = await instance.publicDecrypt([h]);
+
+  // docs show results.clearValues map
+  const v =
+    results?.clearValues?.[h] ??
+    results?.clearValues?.[h.toLowerCase()] ??
+    results?.clearValues?.[h.toUpperCase()];
+
+  if (v === undefined) throw new Error("publicDecrypt returned no clear value");
+  return v as bigint;
+}
+
+
+
 export function useConfidentialDonation({
   instance,
-  storage,
   chainId,
   ethersSigner,
   ethersReadonlyProvider,
 }: {
-  instance: FhevmInstance | undefined;
-  storage: GenericStringStorage;
+  instance: any | undefined;
   chainId: number | undefined;
   ethersSigner: ethers.JsonRpcSigner | undefined;
   ethersReadonlyProvider: ethers.ContractRunner | undefined;
@@ -140,6 +233,7 @@ export function useConfidentialDonation({
         : null,
     [info.address, info.abi, ethersReadonlyProvider]
   );
+
   const rw = useMemo(
     () =>
       info.address && ethersSigner
@@ -148,15 +242,25 @@ export function useConfidentialDonation({
     [info.address, info.abi, ethersSigner]
   );
 
+  console.log("ADDR MAP", {
+  chainId,
+  mapped: (ConfidentialDonationAddresses as any)?.[String(chainId)]?.address,
+  all: ConfidentialDonationAddresses,
+});
+
+
   const isDeployed = useMemo(
     () => Boolean(info.address) && info.address !== ethers.ZeroAddress,
     [info.address]
   );
+
   const canRead = useMemo(() => Boolean(ro), [ro]);
+
   const canWrite = useMemo(
     () => Boolean(rw && ethersSigner && !isWorking),
     [rw, ethersSigner, isWorking]
   );
+
   const canEncrypt = useMemo(
     () => Boolean(rw && instance && ethersSigner && !isWorking),
     [rw, instance, ethersSigner, isWorking]
@@ -167,7 +271,6 @@ export function useConfidentialDonation({
   const listAll = useCallback(async () => {
     if (!ro || !info.address) return;
     try {
-      // --- guard: contract code must exist ---
       const providerRO = ethersReadonlyProvider as any;
       const ok = await hasCode(providerRO, info.address);
       if (!ok) {
@@ -176,11 +279,11 @@ export function useConfidentialDonation({
         setMessage("Contract not deployed on this chain.");
         return;
       }
+
       const ids = (await ro.getAllRoundIds()) as readonly `0x${string}`[];
       const ordered = [...ids].reverse();
 
-      setRoundIds(prev => {
-        // shallow equality check
+      setRoundIds((prev) => {
         const same =
           prev.length === ordered.length &&
           prev.every((v, i) => v === ordered[i]);
@@ -198,14 +301,16 @@ export function useConfidentialDonation({
         refreshingRef.current = true;
         setIsRefreshing(true);
       }
+
       try {
-        // --- guard: contract code must exist ---
-        const providerRO = ethersReadonlyProvider as any;
-        const ok = await hasCode(providerRO, info.address);
-        if (!ok) {
-          setMessage("Contract not deployed on this chain.");
-          return;
-        }
+        const providerRO: any = ethersReadonlyProvider;
+if (providerRO && typeof providerRO.getCode === "function") {
+  const ok = await hasCode(providerRO, info.address);
+  if (!ok) {
+    setMessage("Contract not deployed on this chain.");
+    return;
+  }
+}
 
         const r = await ro.getRound(roundId);
         const view: RoundView = {
@@ -222,6 +327,7 @@ export function useConfidentialDonation({
           title: r[10],
           description: r[11],
         };
+
         setRoundsMap((m) =>
           eqRound(m[roundId], view) ? m : { ...m, [roundId]: view }
         );
@@ -282,6 +388,7 @@ export function useConfidentialDonation({
         setMessage("Wallet not connected.");
         return;
       }
+
       setIsWorking(true);
       try {
         const tx = await rw.createRound(
@@ -314,13 +421,14 @@ export function useConfidentialDonation({
         return;
       }
       if (!instance) {
-        setMessage("FHE not initialized yet.");
+        setMessage("");
         return;
       }
       if (!ethersSigner || !info.address) {
         setMessage("Signer unavailable.");
         return;
       }
+
       setIsWorking(true);
       try {
         // time window sanity
@@ -339,8 +447,9 @@ export function useConfidentialDonation({
 
         setMessage("Encrypting & donating…");
         const user = await ethersSigner.getAddress();
+
         const input = instance.createEncryptedInput(info.address, user);
-        input.add64(amountWei); // store WEI
+        input.add64(amountWei);
         const enc = await input.encrypt();
 
         const tx = await rw.donate(roundId, enc.handles[0], enc.inputProof, {
@@ -351,27 +460,16 @@ export function useConfidentialDonation({
         setMessage("Donation submitted.");
         await readRound(roundId);
 
+        // decrypt my subtotal right away (optional)
         const handle = myHandles[roundId];
         if (handle && handle !== ethers.ZeroHash) {
-          const sig = await FhevmDecryptionSignature.loadOrSign(
+          const clear = await userDecryptOne({
             instance,
-            [info.address],
-            ethersSigner,
-            storage
-          );
-          if (sig) {
-            const res = await instance.userDecrypt(
-              [{ handle, contractAddress: info.address }],
-              sig.privateKey,
-              sig.publicKey,
-              sig.signature,
-              sig.contractAddresses,
-              sig.userAddress,
-              sig.startTimestamp,
-              sig.durationDays
-            );
-            setDecMines((m) => ({ ...m, [roundId]: res[handle] as bigint }));
-          }
+            signer: ethersSigner,
+            handle,
+            contractAddress: info.address,
+          });
+          setDecMines((m) => ({ ...m, [roundId]: clear }));
         }
       } catch (e: any) {
         setMessage(`Donate failed: ${friendly(e)}`);
@@ -379,38 +477,33 @@ export function useConfidentialDonation({
         setIsWorking(false);
       }
     },
-    [
-      rw,
-      instance,
-      ethersSigner,
-      info.address,
-      ro,
-      readRound,
-      myHandles,
-      storage,
-    ]
+    [rw, instance, ethersSigner, info.address, ro, readRound, myHandles]
   );
 
-  const maybeMakeTotalPublic = useCallback(
-    async (roundId: `0x${string}`) => {
-      if (!rw) {
-        setMessage("Wallet not connected.");
-        return;
-      }
-      setIsWorking(true);
-      try {
-        const tx = await rw.maybeMakeTotalPublic(roundId);
-        await tx.wait();
-        setMessage("Total made public.");
-        await readRound(roundId);
-      } catch (e: any) {
-        setMessage(`Unlock failed: ${friendly(e)}`);
-      } finally {
-        setIsWorking(false);
-      }
-    },
-    [rw, readRound]
-  );
+ const maybeMakeTotalPublic = useCallback(async (roundId: `0x${string}`) => {
+  if (!rw) return setMessage("Wallet not connected.");
+
+  const round = roundsMap[roundId];
+  const gate = canUnlockTotal(round);
+
+  if (!gate.ok) {
+    setMessage(gate.reason || "Donation still ongoing.");
+    return;
+  }
+
+  setIsWorking(true);
+  try {
+    const tx = await rw.maybeMakeTotalPublic(roundId);
+    await tx.wait();
+    setMessage("Total made public.");
+    await readRound(roundId);
+  } catch (e: any) {
+    setMessage(`Unlock failed: ${friendly(e)}`);
+  } finally {
+    setIsWorking(false);
+  }
+}, [rw, roundsMap, readRound]);
+
 
   const payout = useCallback(
     async (roundId: `0x${string}`) => {
@@ -436,51 +529,47 @@ export function useConfidentialDonation({
   const decrypt = useCallback(
     async (which: "mine" | "total", roundId: `0x${string}`) => {
       if (!info.address || !instance || !ethersSigner) {
-        setMessage("FHE not initialized yet.");
+        setMessage("");
         return;
       }
-      const handle =
-        which === "mine" ? myHandles[roundId] : totalHandles[roundId];
+
+      const rawHandle = which === "mine" ? myHandles[roundId] : totalHandles[roundId];
+const handle = toHexHandle(rawHandle);
+
       if (!handle) return;
 
       if (handle === ethers.ZeroHash) {
         if (which === "mine") setDecMines((m) => ({ ...m, [roundId]: 0n }));
         else setDecTotals((m) => ({ ...m, [roundId]: 0n }));
-        setMessage(`${which}=0`);
+        setMessage("");
         return;
       }
 
       setIsWorking(true);
       try {
-        const sig = await FhevmDecryptionSignature.loadOrSign(
-          instance,
-          [info.address],
-          ethersSigner,
-          storage
-        );
-        if (!sig) throw new Error("Decryption signature unavailable");
+        const clear =
+          which === "total"
+            ? await publicDecryptOne({
+                instance,
+                handle
+              })
+            : await userDecryptOne({
+                instance,
+                signer: ethersSigner,
+                handle,
+                contractAddress: info.address,
+              });
 
-        const res = await instance.userDecrypt(
-          [{ handle, contractAddress: info.address }],
-          sig.privateKey,
-          sig.publicKey,
-          sig.signature,
-          sig.contractAddresses,
-          sig.userAddress,
-          sig.startTimestamp,
-          sig.durationDays
-        );
-        const clear = res[handle] as bigint;
         if (which === "mine") setDecMines((m) => ({ ...m, [roundId]: clear }));
         else setDecTotals((m) => ({ ...m, [roundId]: clear }));
-        setMessage(`${which}=${clear.toString()}`);
+        setMessage("");
       } catch (e: any) {
         setMessage(`Decrypt ${which} failed: ${friendly(e)}`);
       } finally {
         setIsWorking(false);
       }
     },
-    [info.address, instance, ethersSigner, storage, myHandles, totalHandles]
+    [info.address, instance, ethersSigner, myHandles, totalHandles]
   );
 
   const isOwner = useCallback(
@@ -517,4 +606,48 @@ export function useConfidentialDonation({
     payout,
     isOwner,
   };
+}
+
+function toHexHandle(h: any): string {
+  if (typeof h === "string") return h.startsWith("0x") ? h : `0x${h}`;
+  // ethers can return BytesLike-ish
+  try {
+    return ethers.hexlify(h);
+  } catch {
+    return String(h);
+  }
+}
+
+function nowSec(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+function canUnlockTotal(round?: RoundView) {
+  if (!round) return { ok: false, reason: "Round not loaded" };
+
+  // policy: Never
+  if (round.policy === 2) return { ok: false, reason: "Totals are never revealed." };
+
+  const ended = nowSec() > Number(round.endAt);
+  const goalMet = BigInt(round.escrow) >= BigInt(round.goalWei64);
+
+  if (round.policy === 0) {
+    // AfterEnd
+    return ended ? { ok: true, reason: "" } : { ok: false, reason: "Only after end time." };
+  }
+
+  if (round.policy === 1) {
+    // AfterEndAndGoal
+    if (!ended) return { ok: false, reason: "Only after end time AND meeting the goal." };
+    if (!goalMet) return { ok: false, reason: "Goal not met yet." };
+    return { ok: true, reason: "" };
+  }
+
+  return { ok: false, reason: "Unknown policy" };
+}
+
+function canPayout(round?: RoundView) {
+  if (!round) return { ok: false, reason: "Round not loaded" };
+  const ended = nowSec() > Number(round.endAt);
+  return ended ? { ok: true, reason: "" } : { ok: false, reason: "Only after end time." };
 }

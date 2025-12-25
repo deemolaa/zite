@@ -17,9 +17,9 @@ const generatedContractComment = `
  */
 `;
 
-const DEPLOYMENTS_DIR = "./packages/hardhat/deployments";
-const ARTIFACTS_DIR = "./packages/hardhat/artifacts";
-const TARGET_DIR = "./packages/erc7984example/contracts/";
+const DEPLOYMENTS_DIR = "./app/contract/deployments";
+const ARTIFACTS_DIR = "./app/contract/artifacts";
+const TARGET_DIR = "./app/frontend/abi/";
 
 function getDirectories(path: string) {
   return fs

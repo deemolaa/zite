@@ -35,8 +35,11 @@ export const useFHEDecrypt = (params) => {
         const run = async () => {
             const isStale = () => thisChainId !== chainId || thisSigner !== ethersSigner || requestsKey !== lastReqKeyRef.current;
             try {
+                console.log("[useFHEDecrypt] Starting decrypt...");
                 const uniqueAddresses = Array.from(new Set(thisRequests.map(r => r.contractAddress)));
+                console.log("[useFHEDecrypt] Unique addresses:", uniqueAddresses);
                 const sig = await FhevmDecryptionSignature.loadOrSign(instance, uniqueAddresses, ethersSigner, fhevmDecryptionSignatureStorage);
+                console.log("[useFHEDecrypt] Signature loaded:", !!sig);
                 if (!sig) {
                     setMessage("Unable to build FHEVM decryption signature");
                     setError("SIGNATURE_ERROR: Failed to create decryption signature");
@@ -48,11 +51,13 @@ export const useFHEDecrypt = (params) => {
                 }
                 setMessage("Call FHEVM userDecrypt...");
                 const mutableReqs = thisRequests.map(r => ({ handle: r.handle, contractAddress: r.contractAddress }));
+                console.log("[useFHEDecrypt] Calling userDecrypt with:", mutableReqs);
                 let res = {};
                 try {
                     res = await instance.userDecrypt(mutableReqs, sig.privateKey, sig.publicKey, sig.signature, sig.contractAddresses, sig.userAddress, sig.startTimestamp, sig.durationDays);
                 }
                 catch (e) {
+                    console.error("[useFHEDecrypt] userDecrypt FAILED:", e);
                     const err = e;
                     const code = err && typeof err === "object" && "name" in err ? err.name : "DECRYPT_ERROR";
                     const msg = err && typeof err === "object" && "message" in err ? err.message : "Decryption failed";
@@ -60,6 +65,9 @@ export const useFHEDecrypt = (params) => {
                     setMessage("FHEVM userDecrypt failed");
                     return;
                 }
+                console.log("[useFHEDecrypt] userDecrypt result:", res);
+                console.log("[useFHEDecrypt] result keys:", Object.keys(res));
+                console.log("[useFHEDecrypt] requested handles:", mutableReqs.map(r => r.handle));
                 setMessage("FHEVM userDecrypt completed!");
                 if (isStale()) {
                     setMessage("Ignore FHEVM decryption");

@@ -68,6 +68,18 @@ export function RoundCard({
     };
   }, [roundId, readRound]);
 
+    useEffect(() => {
+  if (!round) return;
+  if (isWorking) return;
+  if (!canEncrypt) return;         // you’re using this as “instance exists”
+  if (!round.totalPublicUnlocked) return;
+  if (totDec !== undefined) return; // already have value
+
+  decryptTotal(roundId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [round?.totalPublicUnlocked, roundId]);
+
+
   const startAt = useMemo(
     () => (round?.startAt ? Number(round.startAt) : undefined),
     [round?.startAt]
@@ -111,6 +123,7 @@ export function RoundCard({
   );
   const unlocked = !!round?.totalPublicUnlocked;
 
+
   const policyLabel = useMemo(() => {
     const p = Number(round?.policy ?? 0);
     return p === 0 ? "After end" : p === 1 ? "After end & goal" : "Never";
@@ -121,6 +134,17 @@ export function RoundCard({
     if (!isFinite(n) || n <= 0) return 0n;
     return BigInt(Math.floor(n * 1e18));
   }, [amount]);
+
+  useEffect(() => {
+  if (!round) return;
+  if (isWorking) return;
+  if (!round.totalPublicUnlocked) return; // still locked
+  if (totDec !== undefined) return;       // already decrypted
+
+  decryptTotal(roundId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [round?.totalPublicUnlocked, roundId]);
+
 
   const myEth = myDec !== undefined ? ethers.formatEther(myDec) : undefined;
   const totEth = totDec !== undefined ? ethers.formatEther(totDec) : undefined;
@@ -256,7 +280,7 @@ export function RoundCard({
               <button
                 className="text-xs px-3 py-1.5 rounded-xl bg-[#1D4ED8] text-white disabled:opacity-50"
                 onClick={() => decryptTotal(roundId)}
-                disabled={!canEncrypt || isWorking || !unlocked}
+                disabled={isWorking || !unlocked}
               >
                 Display total
               </button>
