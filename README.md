@@ -16,6 +16,11 @@ Zite is a confidential donation platform that lets anyone contribute to meaningf
 🧱 Clean Web3 UX:	Native MetaMask support, no extra extensions or setup required.
 🎨 Modern Responsive UI: A smooth, minimal interface designed to make privacy feel natural and intuitive.
 
+## New Features
+✅ Auto total reveal UX: once the owner unlocks totals (policy satisfied), the dApp automatically decrypts and displays the round total (with retry support).
+✅ Policy-aware actions & friendly feedback: unlock/payout are gated by time/goal policy checks, showing helpful messages instead of generic RPC errors.
+✅ Relayer SDK v0.9+ decryption flow: user decryption uses EIP-712 signatures; public totals use the relayer public decrypt endpoint.
+
 ## 🧭 How It Works (Simplified)
 
 1. User enters donation amount
