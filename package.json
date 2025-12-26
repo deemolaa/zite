@@ -6,8 +6,10 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "workspaces": ["packages/*", "app/*"],
-
+  "workspaces": [
+    "packages/*",
+    "app/*"
+  ],
   "scripts": {
     "postinstall": "pnpm sdk:build",
     "chain": "pnpm hardhat:chain",
@@ -53,7 +55,8 @@
     "verify:sepolia": "pnpm hardhat:verify:sepolia"
   },
   "dependencies": {
-    "hardhat-deploy": "^0.11.45"
+    "hardhat-deploy": "^0.11.45",
+    "lucide-react": "^0.562.0"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

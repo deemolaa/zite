@@ -1,22 +1,22 @@
-// components/RoundCard.tsx
-"use client";
+"use client"
 
-import { useEffect, useMemo, useState } from "react";
-import { ethers } from "ethers";
+import { useEffect, useMemo, useState } from "react"
+import { ethers } from "ethers"
+import { PrivacyExplainerModal } from "@/components/PrivacyExplainerModal"
 
 function shortAddr(a?: string) {
-  if (!a) return "—";
-  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+  if (!a) return "—"
+  return `${a.slice(0, 6)}…${a.slice(-4)}`
 }
 function pad2(n: number) {
-  return n < 10 ? `0${n}` : String(n);
+  return n < 10 ? `0${n}` : String(n)
 }
 function fmtHMS(seconds: number) {
-  const s = Math.max(0, Math.floor(seconds));
+  const s = Math.max(0, Math.floor(seconds))
   const h = Math.floor(s / 3600),
     m = Math.floor((s % 3600) / 60),
-    sec = s % 60;
-  return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`;
+    sec = s % 60
+  return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`
 }
 
 export function RoundCard({
@@ -34,197 +34,205 @@ export function RoundCard({
   decryptTotal,
   maybeMakeTotalPublic,
   payout,
-  isOwner = true, // can override if compute owner elsewhere
+  isOwner = true,
 }: {
-  slug: string;
-  roundId: `0x${string}`;
-  readRound: (rid: `0x${string}`) => Promise<void> | void;
-  canWrite: boolean;
-  canEncrypt: boolean;
-  isWorking: boolean;
-  round: any | undefined;
-  myDec: bigint | undefined;
-  totDec: bigint | undefined;
-  donate: (rid: `0x${string}`, wei: bigint) => Promise<void> | void;
-  decryptMine: (rid: `0x${string}`) => Promise<void> | void;
-  decryptTotal: (rid: `0x${string}`) => Promise<void> | void;
-  maybeMakeTotalPublic: (rid: `0x${string}`) => Promise<void> | void;
-  payout: (rid: `0x${string}`) => Promise<void> | void;
-  isOwner?: boolean;
+  slug: string
+  roundId: `0x${string}`
+  readRound: (rid: `0x${string}`) => Promise<void> | void
+  canWrite: boolean
+  canEncrypt: boolean
+  isWorking: boolean
+  round: any | undefined
+  myDec: bigint | undefined
+  totDec: bigint | undefined
+  donate: (rid: `0x${string}`, wei: bigint) => Promise<void> | void
+  decryptMine: (rid: `0x${string}`) => Promise<void> | void
+  decryptTotal: (rid: `0x${string}`) => Promise<void> | void
+  maybeMakeTotalPublic: (rid: `0x${string}`) => Promise<void> | void
+  payout: (rid: `0x${string}`) => Promise<void> | void
+  isOwner?: boolean
 }) {
-  const [amount, setAmount] = useState("0.01");
-  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
+  const [amount, setAmount] = useState("0.01")
+  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000))
+  const [privacyOpen, setPrivacyOpen] = useState(false)
 
   useEffect(() => {
-    readRound(roundId);
-    const poll = setInterval(() => readRound(roundId), 10_000);
-    const tick = setInterval(
-      () => setNowSec(Math.floor(Date.now() / 1000)),
-      1_000
-    );
+    readRound(roundId)
+    const poll = setInterval(() => readRound(roundId), 10_000)
+    const tick = setInterval(() => setNowSec(Math.floor(Date.now() / 1000)), 1_000)
     return () => {
-      clearInterval(poll);
-      clearInterval(tick);
-    };
-  }, [roundId, readRound]);
+      clearInterval(poll)
+      clearInterval(tick)
+    }
+  }, [roundId, readRound])
 
-    useEffect(() => {
-  if (!round) return;
-  if (isWorking) return;
-  if (!canEncrypt) return;         // you’re using this as “instance exists”
-  if (!round.totalPublicUnlocked) return;
-  if (totDec !== undefined) return; // already have value
-
-  decryptTotal(roundId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [round?.totalPublicUnlocked, roundId]);
-
-
-  const startAt = useMemo(
-    () => (round?.startAt ? Number(round.startAt) : undefined),
-    [round?.startAt]
-  );
-  const endAt = useMemo(
-    () => (round?.endAt ? Number(round.endAt) : undefined),
-    [round?.endAt]
-  );
-
-  const raisedEth = useMemo(
-    () => Number(round?.raised ?? 0n) / 1e18,
-    [round?.raised]
-  );
-  const paidOut = !!round?.paidOut;
-  
+  const startAt = useMemo(() => (round?.startAt ? Number(round.startAt) : undefined), [round?.startAt])
+  const endAt = useMemo(() => (round?.endAt ? Number(round.endAt) : undefined), [round?.endAt])
 
   const status = useMemo<"upcoming" | "live" | "ended">(() => {
-    if (!startAt || !endAt) return "upcoming";
-    if (nowSec < startAt) return "upcoming";
-    if (nowSec > endAt) return "ended";
-    return "live";
-  }, [startAt, endAt, nowSec]);
+    if (!startAt || !endAt) return "upcoming"
+    if (nowSec < startAt) return "upcoming"
+    if (nowSec > endAt) return "ended"
+    return "live"
+  }, [startAt, endAt, nowSec])
 
   const countdownLabel = useMemo(() => {
-    if (!startAt || !endAt) return "";
-    if (status === "upcoming") return `Starts in ${fmtHMS(startAt - nowSec)}`;
-    if (status === "live") return `Ends in ${fmtHMS(endAt - nowSec)}`;
-    return "Ended";
-  }, [status, startAt, endAt, nowSec]);
+    if (!startAt || !endAt) return ""
+    if (status === "upcoming") return `Starts in ${fmtHMS(startAt - nowSec)}`
+    if (status === "live") return `Ends in ${fmtHMS(endAt - nowSec)}`
+    return ""
+  }, [status, startAt, endAt, nowSec])
 
+  const raisedEth = useMemo(() => Number(round?.raised ?? 0n) / 1e18, [round?.raised])
   const goalEth = useMemo(
-    () =>
-      round?.goalWei64 !== undefined
-        ? Number(round.goalWei64) / 1e18
-        : undefined,
-    [round?.goalWei64]
-  );
-  const escrowEth = useMemo(
-    () => Number(round?.escrow ?? 0n) / 1e18,
-    [round?.escrow]
-  );
-  const unlocked = !!round?.totalPublicUnlocked;
-
+    () => (round?.goalWei64 !== undefined ? Number(round.goalWei64) / 1e18 : undefined),
+    [round?.goalWei64],
+  )
 
   const policyLabel = useMemo(() => {
-    const p = Number(round?.policy ?? 0);
-    return p === 0 ? "After end" : p === 1 ? "After end & goal" : "Never";
-  }, [round?.policy]);
+    const p = Number(round?.policy ?? 0)
+    return p === 0 ? "After end" : p === 1 ? "After end & goal" : "Never"
+  }, [round?.policy])
+
+  const unlocked = !!round?.totalPublicUnlocked
 
   const amountWei = useMemo(() => {
-    const n = Number(amount);
-    if (!isFinite(n) || n <= 0) return 0n;
-    return BigInt(Math.floor(n * 1e18));
-  }, [amount]);
+    const n = Number(amount)
+    if (!isFinite(n) || n <= 0) return 0n
+    return BigInt(Math.floor(n * 1e18))
+  }, [amount])
 
-  useEffect(() => {
-  if (!round) return;
-  if (isWorking) return;
-  if (!round.totalPublicUnlocked) return; // still locked
-  if (totDec !== undefined) return;       // already decrypted
+  const myEth = myDec !== undefined ? ethers.formatEther(myDec) : undefined
+  const totEth = totDec !== undefined ? ethers.formatEther(totDec) : undefined
 
-  decryptTotal(roundId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [round?.totalPublicUnlocked, roundId]);
+  const donateDisabled = !canEncrypt || isWorking || amountWei === 0n || status !== "live"
 
+  const statusConfig = {
+    live: {
+      bg: "bg-emerald-600",
+      glow: "",
+      text: "LIVE",
+      icon: "●",
+    },
+    upcoming: {
+      bg: "bg-amber-500",
+      glow: "",
+      text: "UPCOMING",
+      icon: "◐",
+    },
+    ended: {
+      bg: "bg-slate-500",
+      glow: "",
+      text: "ENDED",
+      icon: "○",
+    },
+  }[status]
 
-  const myEth = myDec !== undefined ? ethers.formatEther(myDec) : undefined;
-  const totEth = totDec !== undefined ? ethers.formatEther(totDec) : undefined;
+  const progressPercent = useMemo(() => {
+    if (!goalEth || goalEth === 0) return 0
+    return Math.min((raisedEth / goalEth) * 100, 100)
+  }, [raisedEth, goalEth])
 
-  const donateDisabled =
-    !canEncrypt || isWorking || amountWei === 0n || status !== "live";
-  const pill =
-    status === "live"
-      ? "bg-emerald-600"
-      : status === "upcoming"
-      ? "bg-amber-500"
-      : "bg-gray-400";
+  const totalDisplay = useMemo(() => {
+    if (!unlocked) return "Locked"
+    if (totEth !== undefined) return `${totEth} ETH`
+    return "Decrypting…"
+  }, [unlocked, totEth])
 
   return (
-    <div className="rounded-2xl border bg-white/70 backdrop-blur-sm overflow-hidden shadow-sm">
-      <div className="px-4 py-3 bg-gradient-to-r from-[#0B2B7D] via-[#1D4ED8] to-[#0EA5E9] text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <div
-              className="h-6 w-6 rounded-md"
-              style={{ background: "#FFD200" }}
-            />
-            <div className="font-semibold">{round?.title || `#${slug}`}</div>
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      <PrivacyExplainerModal open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
+
+      {/* Header */}
+      <div className="px-4 py-3 bg-gradient-to-br from-slate-900 via-gray-700 to-slate-950 text-white">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-base font-semibold truncate">{round?.title || `Round #${slug}`}</div>
+            <div className="mt-0.5 text-[11px] text-white/70 font-mono">ID: {slug}</div>
+            {round?.description && (
+              <p className="mt-2 text-xs text-white/85 leading-snug line-clamp-2">{round.description}</p>
+            )}
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className={`px-2 py-0.5 rounded-full ${pill}`}>
-              {status.toUpperCase()}
-            </span>
-            <span className="opacity-90">{countdownLabel}</span>
+
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig.bg} ${statusConfig.glow}`}
+            >
+              <span className="text-[10px]">{statusConfig.icon}</span>
+              {statusConfig.text}
+            </div>
+
+            {countdownLabel && (
+              <div className="text-[11px] font-mono bg-white/10 px-2.5 py-1 rounded-full text-white/90">
+                {countdownLabel}
+              </div>
+            )}
           </div>
         </div>
-        {round?.description && (
-          <p className="mt-2 text-white/90 text-xs md:text-[13px]">
-            {round.description}
-          </p>
-        )}
       </div>
 
       <div className="p-4 space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border bg-white/60 p-3">
-                <div className="text-[11px] text-gray-500">Goal</div>
-                <div className="text-lg font-semibold">
-                  {goalEth !== undefined ? `${goalEth} ETH` : "—"}
-                </div>
-              </div>
-              <div className="rounded-xl border bg-white/60 p-3">
-                <div className="text-[11px] text-gray-500">Raised so far</div>
-                <div className="text-lg font-semibold">
-                  {raisedEth.toFixed(4)} ETH
-                </div>
-                {paidOut && (
-      <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200">
-        ✓ Paid out
-      </div>
-    )}
-              </div>
-              <div className="rounded-xl border bg-white/60 p-3">
-                <div className="text-[11px] text-gray-500">Reveal policy</div>
-                <div className="text-lg font-semibold">{policyLabel}</div>
-              </div>
+        {/* Progress */}
+        {goalEth !== undefined && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[12px]">
+              <span className="text-slate-600">Progress</span>
+              <span className="text-slate-700 font-mono">{progressPercent.toFixed(1)}%</span>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-700 rounded-full"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
           </div>
+        )}
 
-          <div className="w-full lg:w-[320px] rounded-xl border bg-white/70 p-3">
-            <div className="text-sm font-medium text-[#0B2B7D]">
-              Donate privately
+        {/* Compact stats */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <div className="text-[11px] text-slate-500">Goal</div>
+            <div className="text-sm font-semibold text-slate-800">{goalEth !== undefined ? `${goalEth} ETH` : "—"}</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50  px-3 py-2.5">
+            <div className="text-[11px] text-emerald-700">Raised</div>
+            <div className="text-sm font-semibold text-emerald-800">{raisedEth.toFixed(4)} ETH</div>
+            {!!round?.paidOut && (
+              <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] bg-white/70 text-emerald-700 border border-emerald-200">
+                ✓ Paid out
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50  px-3 py-2.5 col-span-2 md:col-span-1">
+            <div className="text-[11px] text-blue-700">Policy</div>
+            <div className="text-sm font-semibold text-blue-900">{policyLabel}</div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="grid lg:grid-cols-3 gap-3">
+          {/* Donate */}
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[12px] font-semibold text-slate-800">Donate</div>
+              {status !== "live" && (
+                <div className="text-[10px] px-2 py-0.5 rounded-full bg-white/70 border border-amber-200 text-amber-800">
+                  {status === "upcoming" ? "Opens soon" : "Ended"}
+                </div>
+              )}
             </div>
+
             <div className="mt-2 flex gap-2">
               <input
-                className="border rounded-xl px-3 py-2 w-36"
+                className="border border-slate-200 rounded-lg px-3 py-2 w-full text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-amber-200"
                 placeholder="0.01"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
               <button
-                className="px-4 py-2 rounded-xl text-[#0B2B7D] disabled:opacity-50"
-                style={{ background: "#FFD200" }}
+                className="shrink-0 px-3 py-2 rounded-lg text-sm font-semibold text-slate-900 bg-amber-300 hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={donateDisabled}
                 onClick={() => donate(roundId, amountWei)}
                 title={
@@ -233,89 +241,110 @@ export function RoundCard({
                     : "Encrypts on client, adds homomorphically on-chain"
                 }
               >
-                Donate
+                {isWorking ? "..." : "Donate"}
               </button>
             </div>
-            {status !== "live" && (
-              <div className="mt-1 text-[11px] text-amber-600">
-                {status === "upcoming"
-                  ? "Donations open when the round starts."
-                  : "This round has ended."}
+
+            <div className="mt-2 text-[11px] text-slate-600">
+              Amounts are encrypted.{" "}
+              <button className="underline hover:text-slate-800" onClick={() => setPrivacyOpen(true)}>
+                How it works
+              </button>
+            </div>
+          </div>
+
+          {/* Mine */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50  p-3">
+            <div className="text-[11px] text-slate-500">Your donation</div>
+            <div className="mt-1 text-lg font-semibold text-indigo-900">
+              {myEth !== undefined ? `${myEth} ETH` : "—"}
+            </div>
+            <button
+              className="mt-2 w-full text-sm font-semibold px-3 py-2 rounded-lg border bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => decryptMine(roundId)}
+              disabled={!canEncrypt || isWorking}
+            >
+              Reveal
+            </button>
+          </div>
+
+          {/* Total */}
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] text-emerald-700">Round total</div>
+              {!unlocked && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/70 border border-emerald-200 text-emerald-800">
+                  Locked
+                </span>
+              )}
+            </div>
+
+            <div className="mt-1 text-lg font-semibold text-emerald-900">{totalDisplay}</div>
+
+            {unlocked && totDec === undefined && (
+              <button
+                className="mt-2 w-full text-sm font-semibold px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => decryptTotal(roundId)}
+                disabled={isWorking || !canEncrypt}
+              >
+                Retry decrypt
+              </button>
+            )}
+
+            {!unlocked && (
+              <div className="mt-2 text-[11px] text-slate-600">
+                Owner unlocks after policy is met.
               </div>
             )}
           </div>
         </div>
 
-        <div className="rounded-xl border bg-white/60 p-3">
-          <div className="grid md:grid-cols-3 gap-3">
-            <div className=" items-end justify-end">
-              <div className="mb-2">
-                <div className="text-[11px] text-gray-500">
-                  Your donation amount:
-                </div>
-                <div className="text-xl font-semibold">
-                  {myEth !== undefined ? `${myEth} ETH` : "..."}
-                </div>
+        {/* Owner actions */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[12px] font-semibold text-slate-800">Owner actions</div>
+            {!isOwner && (
+              <div className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+                Owner only
               </div>
-              <button
-                className="text-xs px-3 py-1.5 rounded-xl bg-[#1D4ED8] text-white disabled:opacity-50"
-                onClick={() => decryptMine(roundId)}
-                disabled={!canEncrypt || isWorking}
-              >
-                Click to show
-              </button>
-            </div>
-
-            <div className="items-center mx-auto justify-end">
-              <div className="mb-2">
-                <div className="text-[11px] text-gray-500">Round total:</div>
-                <div className="text-xl font-semibold">
-                  {totEth !== undefined
-                    ? `${totEth} ETH`
-                    : unlocked
-                    ? ".."
-                    : "locked"}
-                </div>
-              </div>
-              <button
-                className="text-xs px-3 py-1.5 rounded-xl bg-[#1D4ED8] text-white disabled:opacity-50"
-                onClick={() => decryptTotal(roundId)}
-                disabled={isWorking || !unlocked}
-              >
-                Display total
-              </button>
-            </div>
-
-            <div className="flex items-end justify-end gap-2">
-              <button
-                className="text-xs px-3 py-1.5 rounded-lg border bg-white hover:bg-gray-50 disabled:opacity-50"
-                onClick={() => maybeMakeTotalPublic(roundId)}
-                disabled={!canWrite || isWorking || !isOwner}
-              >
-                Make round public
-              </button>
-              <button
-                className="text-xs px-3 py-1.5 rounded-lg border bg-white hover:bg-gray-50 disabled:opacity-50"
-                onClick={() => payout(roundId)}
-                disabled={!canWrite || isWorking || !isOwner}
-              >
-                💸 Payout
-              </button>
-            </div>
+            )}
           </div>
 
-          <div className="justify-end items-en mt-3 text-[11px] text-gray-600 flex gap-3">
-            <div>
-              Donation creator:{" "}
-              <b className="font-mono">{shortAddr(round?.owner)}</b>
-            </div>
-            <div>
-              Beneficiary:{" "}
-              <b className="font-mono">{shortAddr(round?.beneficiary)}</b>
-            </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              className="text-sm font-semibold px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => maybeMakeTotalPublic(roundId)}
+              disabled={!canWrite || isWorking || !isOwner}
+              title={!isOwner ? "Only owner" : "Unlock total when policy is met"}
+            >
+              Unlock total
+            </button>
+
+            <button
+              className="text-sm font-semibold px-3 py-2 rounded-lg border border-emerald-200 bg-white hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => payout(roundId)}
+              disabled={!canWrite || isWorking || !isOwner}
+              title={!isOwner ? "Only owner" : "Payout escrow after end"}
+            >
+              Payout
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600 pt-2 border-t border-slate-200">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">Creator</span>
+            <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded-md">{shortAddr(round?.owner)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">Beneficiary</span>
+            <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded-md">
+              {shortAddr(round?.beneficiary)}
+            </span>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

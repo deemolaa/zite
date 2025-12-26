@@ -17,6 +17,9 @@ importers:
       hardhat-deploy:
         specifier: ^0.11.45
         version: 0.11.45
+      lucide-react:
+        specifier: ^0.562.0
+        version: 0.562.0(react@19.0.0)
     devDependencies:
       '@types/node':
         specifier: ^22.7.5
@@ -3944,6 +3947,11 @@ packages:
 
   lru_map@0.3.3:
     resolution: {integrity: sha512-Pn9cox5CsMYngeDbmChANltQl+5pi6XmTrraMSzhPmMBbmgcxmqWry0U3PGapCU1yB4/LqCcom7qhHZiF/jGfQ==}
+
+  lucide-react@0.562.0:
+    resolution: {integrity: sha512-82hOAu7y0dbVuFfmO4bYF1XEwYk/mEbM5E+b1jgci/udUBEE/R7LF5Ip0CCEmXe8AybRM8L+04eP+LGZeDvkiw==}
+    peerDependencies:
+      react: 19.0.0
 
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -9726,6 +9734,10 @@ snapshots:
       yallist: 3.1.1
 
   lru_map@0.3.3: {}
+
+  lucide-react@0.562.0(react@19.0.0):
+    dependencies:
+      react: 19.0.0
 
   lz-string@1.5.0: {}
 
