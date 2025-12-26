@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 
 const RELAYER_BASE = "https://relayer.testnet.zama.org/v1";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { path: string[] } }
-) {
-  const url = `${RELAYER_BASE}/${params.path.join("/")}`;
+type RouteContext = {
+  params: Promise<{ path: string[] }>;
+};
+
+export async function GET(_req: Request, ctx: RouteContext) {
+  const { path } = await ctx.params;
+  const url = `${RELAYER_BASE}/${path.join("/")}`;
+
   const r = await fetch(url, { method: "GET" });
 
   const text = await r.text();
@@ -18,11 +21,9 @@ export async function GET(
   });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { path: string[] } }
-) {
-  const url = `${RELAYER_BASE}/${params.path.join("/")}`;
+export async function POST(req: Request, ctx: RouteContext) {
+  const { path } = await ctx.params;
+  const url = `${RELAYER_BASE}/${path.join("/")}`;
   const body = await req.text();
 
   const r = await fetch(url, {
